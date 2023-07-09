@@ -2,12 +2,6 @@
 #include <stdlib.h>
 #include "vector.h"
 
-struct Vector{
-    data_type *data;
-    int size;
-    int allocated;
-};
-
 // Aloca espaço para um elemento do tipo vector e inicializa os seus atributos.
 Vector *vector_construct(){
     Vector *vector = (Vector *)calloc(10, sizeof(Vector));

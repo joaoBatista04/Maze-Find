@@ -1,14 +1,13 @@
 #ifndef _DATA_STRUCTURES_VECTOR_H_
 #define _DATA_STRUCTURES_VECTOR_H_
 
-typedef int data_type;
+typedef void *data_type;
 
-typedef struct
-{
+typedef struct{
     data_type *data;
     int size;
     int allocated;
-} Vector;
+}Vector;
 
 // Cria um vetor vazio
 Vector *vector_construct();

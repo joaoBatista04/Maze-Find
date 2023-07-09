@@ -166,7 +166,7 @@ def load_maze(input_path):
 def main():
     #maze = load_maze("dados/labirintos/maze10x10_obstaculos_1.bin")
     #maze = load_maze("dados/labirintos/maze30x30_livre.bin")
-    maze = load_maze("dados/labirintos/maze30x30_obstaculos_1.bin")
+    maze = load_maze("../dados/labirintos/maze30x30_obstaculos_1.bin")
 
     STARTING_POINT = (len(maze) - 5, len(maze[0]) - 5)
     END_POINT = (5, 5)
