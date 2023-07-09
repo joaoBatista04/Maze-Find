@@ -2,10 +2,12 @@
 #ifndef _DEQUE_H_
 #define _DEQUE_H_
 
+typedef void *data_type;
+typedef void (*DequeFree)(void *);
 typedef struct Deque Deque;
 
 // criacao do deque
-Deque *deque_construct(void);
+Deque *deque_construct(DequeFree deque_free);
 
 // funcoes para insercao na direita e esquerda (devem ser feitas em O(1), com eventual realloc)
 void deque_push_back(Deque *d, void *val);
