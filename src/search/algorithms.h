@@ -4,10 +4,12 @@
 
 #include "labirinto.h"
 
-typedef struct
+typedef struct celula
 {
     int x;
     int y;
+    double g, h;
+    struct celula *prev;
 } Celula;
 
 typedef struct

@@ -27,11 +27,9 @@ typedef int (*CmpFunction)(void *k1, void *k2);
  */
 HashTable *hash_table_construct(int table_size, HashFunction hash_fn, CmpFunction cmp_fn, HashTableFree free_key, HashTableFree free_val);
 
-void VerificaTamanhoListas(HashTable *h);
-
 // funcao para insercao/atualizacao de pares chave-valor em O(1).
 // Se a chave ja existir, atualiza o valor e retorna o valor antigo para permitir desalocacao.
-void hash_table_set(HashTable *h, void *key, void *val);
+void *hash_table_set(HashTable *h, void *key, void *val);
 
 // retorna o valor associado com a chave key ou NULL se ela nao existir em O(1).
 void *hash_table_get(HashTable *h, void *key);

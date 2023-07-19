@@ -14,41 +14,20 @@ struct HashTable
     int n_elements;
 };
 
-HashTableItem *_hash_pair_construct(void *key, void *val)
-{
-    HashTableItem *p = calloc(1, sizeof(HashTableItem));
-    p->key = key;
-    p->val = val;
-    return p;
-}
-
 HashTableItem *_hash_pair_get(HashTable *h, void *key){
     int key_val = h->hash_fn(h, key);
 
-    if(!h->buckets[key_val]){
-        return NULL;
-    }
+    ForwardList *bucket = h->buckets[key_val];
 
-    HashTableItem *item = NULL;
-    Node *node = h->buckets[key_val]->head;
+    if(bucket != NULL){
+        HashTableItem *item = forward_list_find(bucket, key, h->cmp_fn);
 
-    while(node){
-        HashTableItem *aux = node->value;
-
-        if(!h->cmp_fn(key, aux->key)){
-            item = aux;
-            break;
+        if(item != NULL){
+            return item;
         }
-
-        node = node->next;
     }
 
-    return item;
-}
-
-void _hash_pair_destroy(HashTableItem *p)
-{
-    free(p);
+    return NULL;
 }
 
 HashTable *hash_table_construct(int table_size, HashFunction hash_fn, CmpFunction cmp_fn, HashTableFree free_key, HashTableFree free_val){
@@ -67,95 +46,62 @@ HashTable *hash_table_construct(int table_size, HashFunction hash_fn, CmpFunctio
 
 // funcao para insercao/atualizacao de pares chave-valor em O(1).
 // Se a chave ja existir, atualiza o valor e retorna o valor antigo para permitir desalocacao.
-void hash_table_set(HashTable *h, void *key, void *val){
+void *hash_table_set(HashTable *h, void *key, void *val){
     int key_val = h->hash_fn(h, key);
-    void *value;
-    
-    if(h->buckets[key_val] == NULL){
-        h->buckets[key_val] = forward_list_construct();
-    }
+    HashTableItem *item;
 
-    HashTableItem *item = _hash_pair_get(h, key);
+    if(h->buckets[key_val] != NULL){
+        item = forward_list_find(h->buckets[key_val], key, h->cmp_fn);
 
-    if(item == NULL){
-        forward_list_push_front(h->buckets[key_val], _hash_pair_construct(key, val));
-        h->n_elements++;
-        h->buckets[key_val]->size++;
+        if(item != NULL){
+            void *aux = item->val;
+            item->val = val;
+
+            return aux;
+        }
     }
 
     else{
-        value = item->val;
-        
-        if(h->free_key != NULL){
-            h->free_key(key);
-        }
-
-        if(h->free_val != NULL){
-            h->free_val(value);
-        }
-
-        item->val = val;
+        h->buckets[key_val] = forward_list_construct();
     }
+
+    item = (HashTableItem *)calloc(1, sizeof(HashTableItem));
+    item->key = key;
+    item->val = val;
+
+    forward_list_push_front(h->buckets[key_val], item);
+    h->n_elements++;
+
+    return NULL;
 }
 
 // retorna o valor associado com a chave key ou NULL se ela nao existir em O(1).
 void *hash_table_get(HashTable *h, void *key){
     HashTableItem *item = _hash_pair_get(h, key);
 
-    if(item == NULL){
-        return NULL;
+    if(item != NULL){
+        return item->val;
     }
 
-    if(h->free_key != NULL){
-        h->free_key(key);
-    }
-
-    return item->val;
+    return NULL;
 }
 
 // remove o par chave-valor e retorna o valor ou NULL se nao existir tal chave em O(1).
 void *hash_table_pop(HashTable *h, void *key){
     int key_val = h->hash_fn(h, key);
-    HashTableItem *item;
+    HashTableItem *item = _hash_pair_get(h, key);
+    void *val = NULL;
 
-    if(h->buckets[key_val] == NULL){
-        return NULL;
+    if(item != NULL){
+        val =  item->val;
     }
 
-    Node *curr = h->buckets[key_val]->head;
-    Node *prev = NULL;
+    forward_list_remove(h->buckets[key_val], val);
+    h->n_elements--;
 
-    while(curr){
-        item = curr->value;
+    free(item);
 
-        if(!h->cmp_fn(key, item->key)){
-            if(prev == NULL){
-                h->buckets[key_val]->head = curr->next;
-            }
-
-            else{
-                prev->next = curr->next;
-            }
-
-            if(h->free_key != NULL){
-                h->free_key(item->key);
-            }
-
-            if(h->free_val != NULL){
-                h->free_val(item->val);
-            }
-
-            free(curr);
-            free(item);
-            h->buckets[key_val]->size--;
-            break;
-        }
-
-        prev = curr;
-        curr = curr->next;
-    }
-
-    return item->val;
+    return val;
 }
 
 // numero de buckets
@@ -170,31 +116,24 @@ int hash_table_num_elems(HashTable *h){
 
 // libera o espaco alocado para a tabela hash
 void hash_table_destroy(HashTable *h){
-    for (int i = 0; i < h->table_size; i++)
-    {
-        if (h->buckets[i] != NULL)
-        {
-            Node *n = h->buckets[i]->head;
+    for(int i = 0; i < h->table_size; i++){
+        if(h->buckets[i] != NULL){
+            while(forward_list_size(h->buckets[i])){
+                HashTableItem *data = (HashTableItem *)forward_list_pop_front(h->buckets[i]);
 
-            while (n != NULL)
-            {
-                HashTableItem *pair = n->value;
-                
-                if(h->free_key != NULL){
-                    h->free_key(pair->key);
+                if(h->free_val){
+                    h->free_val(data->val);
                 }
 
-                if(h->free_val != NULL){
-                    h->free_val(pair->val);
+                if(h->free_key){
+                    h->free_key(data->key);
                 }
 
-                free(pair);
-
-                n = n->next;
+                free(data);
             }
-
-            forward_list_destroy(h->buckets[i]);
         }
+
+        free(h->buckets[i]);
     }
 
     free(h->buckets);

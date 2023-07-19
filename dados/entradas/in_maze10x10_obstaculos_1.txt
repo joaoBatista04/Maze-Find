@@ -1,4 +1,4 @@
-dados/labirintos/maze10x10_obstaculos_1.bin
-9 0
-0 9
-DUMMY
+./dados/labirintos/maze20x40_obstaculos_1.bin
+12 11
+17 31
+A*
